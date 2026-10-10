@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Code Base
         uses: actions/checkout@v4
@@ -17,10 +17,12 @@ jobs:
           java-version: '17'
           distribution: 'zulu'
 
-      - name: Initialize Setup Gradle Action
+      - name: Automatically Build Android App via Wrapper
         uses: gradle/actions/setup-gradle@v4
+        with:
+          build-root-directory: android
 
-      - name: Compile Native Debug Android App
+      - name: Execute Compile Task Command
         run: |
           cd android
           chmod +x gradlew
