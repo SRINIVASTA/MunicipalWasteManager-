@@ -17,27 +17,14 @@ jobs:
           java-version: '17'
           distribution: 'zulu'
 
-      - name: Locate and Compile Android App
-        run: |
-          if [ -f "android/gradlew" ]; then
-            echo "Found project inside subfolder!"
-            cd android
-            chmod +x gradlew
-            ./gradlew assembleDebug --no-daemon
-          elif [ -f "gradlew" ]; then
-            echo "Found project directly in root folder!"
-            chmod +x gradlew
-            ./gradlew assembleDebug --no-daemon
-          else
-            echo "Error: Could not find gradlew anywhere in the repository!"
-            exit 1
-          fi
+      - name: Automatically Build Android App
+        uses: gradle/actions/build-action@v4
+        with:
+          build-root-directory: android
+          arguments: assembleDebug --no-daemon
 
       - name: Deploy Compiled Android Package Artifact
         uses: actions/upload-artifact@v4
         with:
           name: CleanCity-Social-App
-          path: |
-            android/app/build/outputs/apk/debug/app-debug.apk
-            app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
+          path: android/app/build/outputs/apk/debug/app-debug.apk
