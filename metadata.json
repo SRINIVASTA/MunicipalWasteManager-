@@ -1,0 +1,6 @@
+{
+  "name": "EcoClean - Municipal Waste Management",
+  "description": "Native Android Jetpack Compose app and interactive simulator for reporting municipal waste with Camera capture, precise GPS location, and automated municipality dispatch.",
+  "requestFramePermissions": ["camera", "geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
