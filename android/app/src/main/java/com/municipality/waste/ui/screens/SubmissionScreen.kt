@@ -1,6 +1,8 @@
 package com.municipality.waste.ui.screens
 
+import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -18,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -46,6 +49,8 @@ fun SubmissionScreen(
     modifier: Modifier = Modifier
 ) {
     var categoryDropdownExpanded by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    
     val formattedTime = remember(location.timestamp) {
         SimpleDateFormat("MMM d, yyyy · hh:mm a", Locale.US).format(Date(location.timestamp))
     }
@@ -94,7 +99,31 @@ fun SubmissionScreen(
                     }
 
                     Button(
-                        onClick = onSubmitClicked,
+                        onClick = {
+                            val mapsUrl = "https://google.com{location.latitude},${location.longitude}"
+                            val userComments = comments.ifBlank { "None provided." }
+                            val messageText = """
+                                🚨 *CITIZEN GARBAGE REPORT* 🚨
+                                
+                                *Category:* ${selectedCategory.displayName}
+                                *Address:* ${location.streetAddress}
+                                *Location Pin:* $mapsUrl
+                                *Comments:* $userComments
+                                
+                                Sent via EcoClean Social App. Please forward this ticket to the area sanitation team.
+                            """.trimIndent()
+
+                            try {
+                                val encodedMessage = Uri.encode(messageText)
+                                val whatsappUri = Uri.parse("https://whatsapp.com")
+                                val whatsappIntent = Intent(Intent.ACTION_VIEW, whatsappUri).apply {
+                                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                }
+                                context.startActivity(whatsappIntent)
+                            } catch (e: Exception) {
+                                Toast.makeText(context, "WhatsApp is not installed on this device", Toast.LENGTH_LONG).show()
+                            }
+                        },
                         enabled = !isSubmitting,
                         shape = RoundedCornerShape(14.dp),
                         colors = ButtonDefaults.buttonColors(
@@ -104,30 +133,17 @@ fun SubmissionScreen(
                             .fillMaxWidth()
                             .height(52.dp)
                     ) {
-                        if (isSubmitting) {
-                            CircularProgressIndicator(
-                                color = Color.White,
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp
-                            )
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Text(
-                                text = "Transmitting to City Dispatch...",
-                                fontWeight = FontWeight.Bold
-                            )
-                        } else {
-                            Icon(
-                                imageVector = Icons.Default.Send,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "Submit to Municipality",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 16.sp
-                            )
-                        }
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Send Report via WhatsApp",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
                     }
                 }
             }
@@ -141,7 +157,6 @@ fun SubmissionScreen(
                 .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
-            // 1. Photo Preview Card with Retake Option
             Card(
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(
@@ -164,7 +179,6 @@ fun SubmissionScreen(
                                 .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
                         )
 
-                        // Retake Photo Button floating on top right
                         FilledTonalButton(
                             onClick = onRetakePhoto,
                             enabled = !isSubmitting,
@@ -186,7 +200,6 @@ fun SubmissionScreen(
                             Text(text = "Retake", style = MaterialTheme.typography.labelSmall)
                         }
 
-                        // Badge on bottom left
                         Surface(
                             shape = RoundedCornerShape(8.dp),
                             color = Color.Black.copy(alpha = 0.7f),
@@ -210,12 +223,9 @@ fun SubmissionScreen(
                                     color = Color.White,
                                     style = MaterialTheme.typography.labelSmall
                                 )
-                            }
-                        }
-                    }
                 }
             }
-
+            
             // 2. Precise GPS Location & Address Card
             ElevatedCard(
                 shape = RoundedCornerShape(18.dp),
@@ -257,13 +267,12 @@ fun SubmissionScreen(
                                 fontWeight = FontWeight.Bold
                             )
                         }
-
                         Surface(
                             shape = RoundedCornerShape(6.dp),
                             color = ForestPrimaryContainer
                         ) {
                             Text(
-                                text = "±${location.accuracyMeters.toInt().coerceAtLeast(3)}m High Accuracy",
+                                text = " ${location.accuracyMeters.toInt().coerceAtLeast(3)}m High Accuracy",
                                 color = ForestPrimary,
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.SemiBold,
@@ -271,8 +280,7 @@ fun SubmissionScreen(
                             )
                         }
                     }
-
-                    // Resolved Municipal Address
+                    
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -293,8 +301,7 @@ fun SubmissionScreen(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     }
-
-                    // Coordinates & Timestamp row
+                    
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
@@ -311,7 +318,6 @@ fun SubmissionScreen(
                                 fontWeight = FontWeight.Medium
                             )
                         }
-
                         Column(horizontalAlignment = Alignment.End) {
                             Text(
                                 text = "Timestamp",
@@ -327,7 +333,7 @@ fun SubmissionScreen(
                     }
                 }
             }
-
+            
             // 3. Waste Classification Picker
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
@@ -335,28 +341,28 @@ fun SubmissionScreen(
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.SemiBold
                 )
-
-                ExposedDropdownMenuBox(
-                    expanded = categoryDropdownExpanded,
-                    onExpandedChange = { if (!isSubmitting) categoryDropdownExpanded = it }
-                ) {
-                    OutlinedTextField(
-                        value = selectedCategory.displayName,
-                        onValueChange = {},
-                        readOnly = true,
-                        trailingIcon = {
-                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryDropdownExpanded)
-                        },
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    OutlinedButton(
+                        onClick = { if (!isSubmitting) categoryDropdownExpanded = true },
                         shape = RoundedCornerShape(14.dp),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .menuAnchor(),
-                        enabled = !isSubmitting
-                    )
-
-                    ExposedDropdownMenu(
+                            .height(56.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(text = selectedCategory.displayName, fontSize = 14.sp)
+                            Icon(imageVector = Icons.Default.ArrowDropDown, contentDescription = null)
+                        }
+                    }
+                    DropdownMenu(
                         expanded = categoryDropdownExpanded,
-                        onDismissRequest = { categoryDropdownExpanded = false }
+                        onDismissRequest = { categoryDropdownExpanded = false },
+                        modifier = Modifier.fillMaxWidth(0.9f)
                     ) {
                         WasteCategory.entries.forEach { category ->
                             DropdownMenuItem(
@@ -379,7 +385,7 @@ fun SubmissionScreen(
                     }
                 }
             }
-
+            
             // 4. Additional Comments Field (Optional)
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Row(
@@ -397,7 +403,6 @@ fun SubmissionScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-
                 OutlinedTextField(
                     value = comments,
                     onValueChange = onCommentsChanged,
@@ -411,7 +416,6 @@ fun SubmissionScreen(
                     enabled = !isSubmitting
                 )
             }
-
             Spacer(modifier = Modifier.height(24.dp))
         }
     }
