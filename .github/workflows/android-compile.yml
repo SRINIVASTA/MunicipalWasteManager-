@@ -6,27 +6,27 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - name: Checkout Code
+      - name: Checkout Code Base
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      - name: Initialize Java JDK Runtime Environment
+        uses: actions/setup-java@v5
         with:
           java-version: '17'
           distribution: 'zulu'
           cache: gradle
 
-      - name: Grant Execute Permission to Gradle
+      - name: Assign Execution Rights to Gradle Wrapper
         run: chmod +x android/gradlew
 
-      - name: Assemble Debug APK Package
+      - name: Compile Native Debug Application Package
         run: |
           cd android
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --no-daemon
 
-      - name: Upload Compiled APK Artifact
+      - name: Deploy Compiled Android Package Artifact
         uses: actions/upload-artifact@v4
         with:
           name: CleanCity-Social-App
