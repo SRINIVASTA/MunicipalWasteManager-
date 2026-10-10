@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout Code Base
         uses: actions/checkout@v4
@@ -17,11 +17,14 @@ jobs:
           java-version: '17'
           distribution: 'zulu'
 
-      - name: Automatically Build Android App
-        uses: gradle/actions/build-action@v4
-        with:
-          build-root-directory: android
-          arguments: assembleDebug --no-daemon
+      - name: Initialize Setup Gradle Action
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Compile Native Debug Android App
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
 
       - name: Deploy Compiled Android Package Artifact
         uses: actions/upload-artifact@v4
